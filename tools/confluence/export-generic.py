@@ -96,6 +96,35 @@ def load_page_json(json_file: Path) -> Optional[Dict]:
         return None
 
 
+def build_parent_link(ancestors: List[Dict], space_mapping: Dict, root_page_id: str) -> Optional[str]:
+    """Build parent page Obsidian link from ancestors
+
+    Args:
+        ancestors: List of ancestor pages (root → current)
+        space_mapping: Page ID → file path mapping for this space
+        root_page_id: Root page ID to skip
+
+    Returns:
+        [[parent-path]] or None
+    """
+    # Ancestors are ordered root → current, so reverse to find immediate parent
+    for ancestor in reversed(ancestors):
+        ancestor_id = ancestor.get('id', '')
+
+        # Skip root page
+        if ancestor_id == root_page_id:
+            continue
+
+        # Find parent in mapping
+        if ancestor_id in space_mapping:
+            parent_path = space_mapping[ancestor_id]
+            # Remove .md extension for Obsidian link
+            parent_path_no_ext = str(parent_path).replace('.md', '')
+            return f"[[{parent_path_no_ext}]]"
+
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description='Convert Confluence Space to Obsidian Markdown')
     parser.add_argument('--space-name', required=True, help='Space name (e.g., ENGINEERING)')
@@ -213,6 +242,12 @@ def main():
                 # Count attachments (rough estimate)
                 stats['attachments_downloaded'] += 1
 
+            # Build parent link
+            parent_link = build_parent_link(ancestors, space_mapping, args.root_page_id)
+            parent_section = ""
+            if parent_link:
+                parent_section = f"\n> 📁 **Parent**: {parent_link}\n"
+
             # Add frontmatter
             frontmatter = f"""---
 title: {title}
@@ -224,9 +259,9 @@ updated: {page.get('version', {}).get('when', '')}
 
 """
 
-            # Write file
+            # Write file (frontmatter + parent link + content)
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(frontmatter + markdown_content)
+                f.write(frontmatter + parent_section + markdown_content)
 
             # Update mapping (simple: page_id → relative_path)
             space_mapping[page_id] = relative_file_path
