@@ -13,8 +13,8 @@
 
 **What This Solves**:
 1. **Wiki Context**: Auto-sync Confluence docs to local Obsidian for unified context across projects
-2. **Multi-Agent Orchestration**: Codex + Claude collaboration with feedback loop for better code quality
-3. **Project Integration**: Wiki context injection when working across multiple codebases
+2. **Project Integration**: Wiki context injection when working across multiple codebases
+3. **Multi-Agent Orchestration**: Codex + Claude collaboration with feedback loop for better code quality
 
 **Key Features**:
 - ✅ Auto-sync Confluence → Markdown (Obsidian format)
