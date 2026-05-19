@@ -281,6 +281,14 @@ def process_page(
             for df in sorted(diagram_files):
                 diagram_files_section += f"- [[{attachment_dir.name}/{df}]]\n"
 
+    # Related Notes section (hub-and-spoke structure for graph view)
+    related_notes_section = f"""
+---
+
+## Related Notes
+- [[02_Work/Projects/{space_name}/README|{space_name} Overview]]
+"""
+
     content = f"""{frontmatter}
 ---
 id: {page_id}
@@ -297,7 +305,7 @@ source: {page_url}
 *Source: Confluence Page ID {page_id}*
 *Last Updated: {last_updated}*
 
-{diagram_files_section}
+{diagram_files_section}{related_notes_section}
 """
 
     # Check existing file
@@ -455,6 +463,32 @@ def main():
     # Save mapping
     with open(MAPPING_FILE, 'w', encoding='utf-8') as f:
         json.dump(mapping, f, indent=2, ensure_ascii=False)
+
+    # Create README file (hub for graph view)
+    readme_path = OUTPUT_DIR / "README.md"
+    if not readme_path.exists():
+        readme_content = f"""---
+title: {args.space_name} Overview
+tags:
+  - {args.space_name.lower()}
+  - overview
+  - index
+---
+
+# {args.space_name} Overview
+
+This is the central hub for all {args.space_name} documentation synced from Confluence.
+
+## Statistics
+- Total Documents: {len(json_files)}
+- Last Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Navigation
+All documents in this space link back to this overview page, creating a hub-and-spoke structure in the graph view.
+"""
+        with open(readme_path, 'w', encoding='utf-8') as f:
+            f.write(readme_content)
+        print(f"  📝 Created: README.md (graph hub)")
 
     print()
     print("=" * 60)
