@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Confluence Storage Format → Markdown 변환 + Obsidian 링크 생성
+Confluence Storage Format → Markdown Converter + Obsidian Link Generator
 """
 
 import re
@@ -11,27 +11,26 @@ import html2text
 
 
 class ConfluenceConverter:
-    """Confluence Storage Format을 Obsidian Markdown으로 변환"""
+    """Convert Confluence Storage Format to Obsidian Markdown"""
 
     def __init__(self, mapping: Dict):
         """
         Args:
-            mapping: .confluence-mapping.json 데이터
-                     {'CATCH': {'page_id': 'relative/path.md'}, 'Common': {...}}
+            mapping: .confluence-mapping.json data
+                     {'SPACE_A': {'page_id': 'relative/path.md'}, 'SPACE_B': {...}}
         """
         self.mapping = mapping
         self.html_converter = html2text.HTML2Text()
-        self.html_converter.body_width = 0  # 줄바꿈 방지
+        self.html_converter.body_width = 0  # Prevent line wrapping
         self.html_converter.ignore_links = False
         self.html_converter.ignore_images = False
 
-        # Page ID → 파일 경로 매핑
+        # Page ID → file path mapping
         self.id_to_path = {}
-        for section in ['CATCH', 'Common', 'CAMA']:
-            if section in mapping:
-                self.id_to_path.update(mapping[section])
+        for section in mapping.keys():
+            self.id_to_path.update(mapping[section])
 
-        # Page Title → 파일 경로 역매핑 (나중에 구축)
+        # Page Title → file path reverse mapping (built later)
         self.title_to_path = {}
 
     def add_title_mapping(self, page_id: str, title: str, path: str):
@@ -40,24 +39,20 @@ class ConfluenceConverter:
         self.title_to_path[clean_title] = path
 
     def build_full_title_mapping(self, temp_dir):
-        """모든 프로젝트(CATCH, Common, CAMA)의 제목 매핑 구축
+        """Build title mapping for all spaces
 
         Args:
-            temp_dir: .temp 디렉토리 경로 (pathlib.Path)
+            temp_dir: .temp directory path (pathlib.Path)
         """
         from pathlib import Path
         import json
 
-        sections = [
-            ('CATCH', 'catch-full'),
-            ('Common', 'common-full'),
-            ('CAMA', 'cama-full'),
-        ]
-
-        for section_name, folder_name in sections:
-            section_dir = temp_dir / folder_name
-            if not section_dir.exists():
+        # Scan all subdirectories in temp_dir
+        for section_dir in temp_dir.iterdir():
+            if not section_dir.is_dir():
                 continue
+
+            section_name = section_dir.name
 
             json_files = list(section_dir.glob('*.json'))
             for json_file in json_files:
