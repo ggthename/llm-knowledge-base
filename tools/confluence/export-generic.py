@@ -112,12 +112,18 @@ def main():
     # Ensure directories exist
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Load existing mapping
-    mapping = load_mapping(MAPPING_FILE)
+    # Load existing mapping (space-separated structure)
+    all_mapping = load_mapping(MAPPING_FILE)
+
+    # Get or create this space's mapping
+    if args.space_name not in all_mapping:
+        all_mapping[args.space_name] = {}
+
+    space_mapping = all_mapping[args.space_name]
 
     # Initialize converters
     confluence_config = load_confluence_config()
-    converter = ConfluenceConverter(mapping)  # Pass mapping dict, not URL
+    converter = ConfluenceConverter(all_mapping)  # Pass full mapping for cross-space links
     downloader = AttachmentDownloader(confluence_config['CONFLUENCE_URL'],
                                       confluence_config['CONFLUENCE_TOKEN'])
 
@@ -129,13 +135,27 @@ def main():
         return
 
     print(f"📄 Found {len(json_files)} pages to process")
+
+    # Build full title mapping for Confluence link → [[Obsidian link]] conversion
+    print("🔗 Building page title mapping for link conversion...")
+    converter.build_full_title_mapping(TEMP_DIR)
+    print(f"   ✅ {len(converter.title_to_path)} pages mapped (cross-linking enabled)")
     print("")
 
-    # Process pages
-    new_count = 0
-    updated_count = 0
-    skipped_count = 0
+    # Statistics
+    stats = {
+        'new': 0,
+        'updated': 0,
+        'skipped': 0,
+        'deleted': 0,
+        'links_converted': 0,
+        'attachments_downloaded': 0
+    }
 
+    # Track synced page IDs for deletion detection
+    synced_page_ids = {json_file.stem for json_file in json_files}
+
+    # Process pages
     for json_file in sorted(json_files):
         page = load_page_json(json_file)
         if not page:
@@ -151,21 +171,22 @@ def main():
         file_path = OUTPUT_DIR / hierarchy_path / filename
 
         # Check if needs update
-        is_new = page_id not in mapping
+        is_new = page_id not in space_mapping
+        relative_file_path = str(file_path.relative_to(OUTPUT_DIR))
 
         if is_new:
             status = "✨ New"
-            new_count += 1
+            stats['new'] += 1
         else:
-            old_path = mapping[page_id].get('file_path', '')
-            if str(file_path.relative_to(OUTPUT_DIR)) != old_path:
+            old_path = space_mapping[page_id]
+            if relative_file_path != old_path:
                 status = "📝 Moved"
-                updated_count += 1
+                stats['updated'] += 1
             else:
                 status = "✓ Exists"
-                skipped_count += 1
+                stats['skipped'] += 1
 
-        print(f"{status}: {file_path.relative_to(OUTPUT_DIR)}")
+        print(f"{status}: {relative_file_path}")
 
         # Convert to Markdown
         try:
@@ -176,6 +197,11 @@ def main():
             body = page.get('body', {}).get('storage', {}).get('value', '')
             markdown_content = converter.convert_to_markdown(body)
 
+            # Count links converted
+            links_count = markdown_content.count('[[')
+            if links_count > 0:
+                stats['links_converted'] += links_count
+
             # Download attachments
             attachments = page.get('_expandable', {}).get('attachments', '')
             if attachments:
@@ -184,6 +210,8 @@ def main():
                     markdown_content,
                     file_path.parent
                 )
+                # Count attachments (rough estimate)
+                stats['attachments_downloaded'] += 1
 
             # Add frontmatter
             frontmatter = f"""---
@@ -200,26 +228,51 @@ updated: {page.get('version', {}).get('when', '')}
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(frontmatter + markdown_content)
 
-            # Update mapping
-            mapping[page_id] = {
-                'file_path': str(file_path.relative_to(OUTPUT_DIR)),
-                'title': title,
-                'updated': datetime.now().isoformat()
-            }
+            # Update mapping (simple: page_id → relative_path)
+            space_mapping[page_id] = relative_file_path
 
         except Exception as e:
             print(f"  ❌ Error: {e}")
 
-    # Save mapping
-    save_mapping(mapping, MAPPING_FILE)
+    # Detect deleted pages (Confluence → Obsidian)
+    print("")
+    print("🔍 Checking for deleted pages...")
+    orphaned_ids = []
+    for page_id, relative_path in space_mapping.items():
+        if page_id not in synced_page_ids:
+            # Page was deleted from Confluence
+            orphaned_file = OUTPUT_DIR / relative_path
+            if orphaned_file.exists():
+                orphaned_file.unlink()
+                print(f"  🗑️  Deleted: {relative_path} (Page ID {page_id} removed from Confluence)")
+                stats['deleted'] += 1
+            orphaned_ids.append(page_id)
+
+    # Remove from mapping
+    for page_id in orphaned_ids:
+        del space_mapping[page_id]
+
+    # Update all_mapping and save
+    all_mapping[args.space_name] = space_mapping
+    save_mapping(all_mapping, MAPPING_FILE)
 
     # Summary
     print("")
-    print("📊 Summary:")
-    print(f"  - New: {new_count}")
-    print(f"  - Updated: {updated_count}")
-    print(f"  - Skipped: {skipped_count}")
+    print("=" * 60)
+    print("  ✅ Conversion Complete")
+    print("=" * 60)
+    print("")
+    print("📊 Statistics:")
+    print(f"  - New: {stats['new']}")
+    print(f"  - Updated: {stats['updated']}")
+    print(f"  - Skipped: {stats['skipped']}")
+    print(f"  - Deleted: {stats['deleted']}")
+    print(f"  - 🔗 Links converted: {stats['links_converted']}")
+    if stats['attachments_downloaded'] > 0:
+        print(f"  - 📎 Attachments downloaded: {stats['attachments_downloaded']}")
     print(f"  - Total: {len(json_files)}")
+    print("")
+    print(f"📂 Location: {OUTPUT_DIR}")
 
 
 if __name__ == '__main__':
