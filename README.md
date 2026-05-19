@@ -13,7 +13,7 @@
 
 **What This Solves**:
 1. **Wiki Context** (Foundation): Auto-sync Confluence docs to local Obsidian for unified context across projects
-2. **Project Integration** (Application): Wiki context injection when working across multiple codebases
+2. **Project Integration** (Integration): Wiki context injection when working across multiple codebases
 3. **Multi-Agent Orchestration** (Execution): Codex + Claude collaboration with feedback loop for better code quality
 
 **Key Features**:
