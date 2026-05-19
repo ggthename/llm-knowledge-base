@@ -1,0 +1,25 @@
+# Confluence API Configuration Template
+# Usage: Copy this file to .confluence-config and fill in your values
+# cp .confluence-config.template .confluence-config
+
+# Confluence API
+CONFLUENCE_URL="https://your-company.atlassian.net/wiki"
+CONFLUENCE_TOKEN="YOUR_TOKEN_HERE"
+
+# Space Configuration
+# Format: SPACE_NAME_ROOT_PAGE="page_id"
+# Find page ID from URL: https://your-confluence.com/pages/viewpage.action?pageId=123456789
+
+# Example: Your main project space
+YOUR_SPACE_ROOT_PAGE="123456789"
+
+# You can add multiple spaces:
+# ENGINEERING_ROOT_PAGE="987654321"
+# PRODUCT_ROOT_PAGE="111222333"
+
+# Paths
+KNOWLEDGE_ROOT="$HOME/Develop/llm-knowledge-base"
+OBSIDIAN_VAULT="$HOME/Documents/Obsidian Vault"
+
+# Optional: Personal space (for individual notes sync)
+# PERSONAL_ROOT_PAGE="YOUR_PAGE_ID_HERE"

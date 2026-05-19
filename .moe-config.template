@@ -1,0 +1,65 @@
+# Multi-Agent Orchestration Configuration Template
+# Mixture of Experts (MoE) routing rules
+# Copy this to your project directory as .moe-config
+
+task_types:
+  simple_code:
+    primary: codex
+    validator: claude
+    keywords:
+      - controller
+      - service
+      - repository
+      - dto
+      - entity
+      - rest
+      - api
+      - crud
+      - jpa
+      - query
+      - sql
+
+  complex_code:
+    primary: claude
+    validator: codex
+    keywords:
+      - authentication
+      - authorization
+      - security
+      - token
+      - jwt
+      - oauth2
+      - distributed
+      - stream-processing
+      - transaction
+      - concurrency
+      - optimization
+      - architecture
+      - design
+      - performance
+
+  doc:
+    primary: claude
+    validator: codex
+    keywords:
+      - document
+      - readme
+      - javadoc
+      - comment
+      - documentation
+
+  analysis:
+    primary: claude
+    validator: codex
+    keywords:
+      - analyze
+      - review
+      - refactor
+      - improve
+      - investigate
+
+# Customize this file per project based on:
+# - Technology stack
+# - Team preferences
+# - Code complexity patterns
+# - Domain-specific keywords

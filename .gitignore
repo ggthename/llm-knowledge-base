@@ -1,0 +1,34 @@
+# Temporary files
+.temp/
+
+# Sensitive information (API tokens)
+.confluence-config
+
+# User-specific project paths
+.projects-config
+
+# Sync records
+.last-sync
+
+# Logs
+logs/
+
+# Python virtual environment
+.venv/
+*.pyc
+__pycache__/
+*.backup
+*.bak
+
+# Generated presentation files
+*.pdf
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

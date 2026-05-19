@@ -1,0 +1,24 @@
+# Source Project Paths Configuration
+# Usage: Copy this file to .projects-config and set your project paths
+# cp .projects-config.template .projects-config
+
+# Define paths to your source code projects
+# These are used for wiki context injection during development
+# Leave empty ("") if you don't have that project
+
+# Example projects - replace with your actual project paths
+PROJECT_BACKEND="$HOME/dev/backend-service"
+PROJECT_FRONTEND="$HOME/dev/frontend-app"
+PROJECT_DATA_PIPELINE="$HOME/dev/data-pipeline"
+PROJECT_MOBILE="$HOME/dev/mobile-app"
+PROJECT_INFRASTRUCTURE="$HOME/dev/infrastructure"
+
+# You can add more projects as needed:
+# PROJECT_ANALYTICS=""
+# PROJECT_ML_MODEL=""
+# PROJECT_API_GATEWAY=""
+
+# Note: These variables are used by:
+# - Wiki context injection (tools/wiki_context.py)
+# - Multi-agent orchestration (tools/agent_orchestrate_moe.py)
+# - Agent routing based on current directory
