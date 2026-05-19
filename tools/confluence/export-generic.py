@@ -281,9 +281,9 @@ def process_page(
             for df in sorted(diagram_files):
                 diagram_files_section += f"- [[{attachment_dir.name}/{df}]]\n"
 
-    # Related Notes section (hub-and-spoke structure for graph view)
-    related_notes_section = f"""
----
+    # Related Notes & Code Repository section (hub-and-spoke structure for graph view)
+    # This matches original export-catch.py exactly
+    related_notes_section = f"""---
 
 ## Related Notes
 - [[02_Work/Projects/{space_name}/README|{space_name} Overview]]
@@ -464,7 +464,7 @@ def main():
     with open(MAPPING_FILE, 'w', encoding='utf-8') as f:
         json.dump(mapping, f, indent=2, ensure_ascii=False)
 
-    # Create README file (hub for graph view)
+    # Create README file (hub for graph view) - matches original behavior
     readme_path = OUTPUT_DIR / "README.md"
     if not readme_path.exists():
         readme_content = f"""---
@@ -483,8 +483,13 @@ This is the central hub for all {args.space_name} documentation synced from Conf
 - Total Documents: {len(json_files)}
 - Last Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
+## Code Repository
+<!-- Optional: Add your local repository path for quick access -->
+<!-- Example: [your-project-name](file:///Users/yourname/path/to/project) -->
+
 ## Navigation
-All documents in this space link back to this overview page, creating a hub-and-spoke structure in the graph view.
+All documents in this space link back to this overview page via "Related Notes",
+creating a hub-and-spoke structure in the Obsidian graph view.
 """
         with open(readme_path, 'w', encoding='utf-8') as f:
             f.write(readme_content)
