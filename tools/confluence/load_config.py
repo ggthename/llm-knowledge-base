@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-.confluence-config Loader Utility
-Converts Bash environment variables for Python usage
+.confluence-config 로드 유틸리티
+Bash 환경변수를 Python에서 사용 가능하게 변환
 """
 
 import os
@@ -12,13 +12,15 @@ from typing import Dict
 
 def load_confluence_config() -> Dict[str, str]:
     """
-    Load .confluence-config file and return environment variables
+    .confluence-config 파일을 로드하여 환경변수 딕셔너리 반환
 
     Returns:
-        dict: Environment variable dictionary
+        dict: 환경변수 딕셔너리
             - CONFLUENCE_URL
             - CONFLUENCE_TOKEN
-            - *_ROOT_PAGE (all variables ending with _ROOT_PAGE)
+            - CATCH_ROOT_PAGE
+            - COMMON_ROOT_PAGE
+            - CAMA_ROOT_PAGE
             - KNOWLEDGE_ROOT
             - OBSIDIAN_VAULT
     """
@@ -33,11 +35,15 @@ def load_confluence_config() -> Dict[str, str]:
             f"Please create it from .confluence-config.template"
         )
 
-    # Load all variables from config file
+    # Bash로 변수 로드 후 출력 (echo 방식으로 따옴표 자동 제거)
     cmd = f"""
     source "{config_file}"
-    # Export all variables defined in the config
-    set | grep -E "^(CONFLUENCE_|KNOWLEDGE_|OBSIDIAN_|.*_ROOT_PAGE=)"
+    echo "CONFLUENCE_URL=$CONFLUENCE_URL"
+    echo "CONFLUENCE_TOKEN=$CONFLUENCE_TOKEN"
+    echo "KNOWLEDGE_ROOT=$KNOWLEDGE_ROOT"
+    echo "OBSIDIAN_VAULT=$OBSIDIAN_VAULT"
+    # Export all *_ROOT_PAGE variables
+    set | grep "_ROOT_PAGE=" | while read line; do echo "$line"; done
     """
 
     result = subprocess.run(
@@ -47,7 +53,7 @@ def load_confluence_config() -> Dict[str, str]:
         check=True
     )
 
-    # Parse
+    # 파싱
     config = {}
     for line in result.stdout.strip().split('\n'):
         if '=' in line:
@@ -59,7 +65,7 @@ def load_confluence_config() -> Dict[str, str]:
 
 def get_paths() -> tuple:
     """
-    Return frequently used paths as Path objects
+    자주 사용하는 경로들을 Path 객체로 반환
 
     Returns:
         tuple: (knowledge_root, obsidian_vault, work_dir)
@@ -74,15 +80,12 @@ def get_paths() -> tuple:
 
 
 if __name__ == "__main__":
-    # Test
+    # 테스트
     config = load_confluence_config()
     print("✅ Config loaded:")
     for key, value in config.items():
-        # Show partial token only
+        # 토큰은 일부만 표시
         if key == "CONFLUENCE_TOKEN":
-            if len(value) > 20:
-                print(f"  {key}: {value[:10]}...{value[-10:]}")
-            else:
-                print(f"  {key}: [hidden]")
+            print(f"  {key}: {value[:10]}...{value[-10:]}")
         else:
             print(f"  {key}: {value}")
