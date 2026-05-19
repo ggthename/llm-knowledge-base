@@ -258,8 +258,10 @@ def process_page(
             body_markdown = body_markdown.replace(r'\(', '(').replace(r'\)', ')')
 
             # Convert only image links (paths starting with attachments_)
+            # Use .+? (non-greedy) to handle paths with parentheses like attachments_(test)/
+            # Lookahead (?=\s|$|!) ensures we stop at whitespace, end, or next image
             body_markdown = re.sub(
-                r'!\[([^\]]*)\]\((attachments_.+?\.(?:png|jpg|jpeg|gif|svg|bmp))\)',
+                r'!\[([^\]]*)\]\((attachments_.+?\.(?:png|jpg|jpeg|gif|svg|bmp))\)(?=\s|$|!)',
                 r'![[\2]]',
                 body_markdown,
                 flags=re.IGNORECASE
