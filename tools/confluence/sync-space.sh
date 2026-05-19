@@ -34,12 +34,26 @@ if [ -z "$ROOT_PAGE_ID" ]; then
     exit 1
 fi
 
-echo "🔄 Syncing Confluence Space: $SPACE_NAME"
-echo "   Root Page ID: $ROOT_PAGE_ID"
+echo "========================================="
+echo "  🔄 Confluence Full Sync: $SPACE_NAME"
+echo "========================================="
+echo ""
+echo "📂 Root Page ID: $ROOT_PAGE_ID"
 echo ""
 
-# Create temp directory
-mkdir -p "$PROJECT_ROOT/.temp/$SPACE_NAME"
+# Temp directory for JSON files
+TEMP_DIR="$PROJECT_ROOT/.temp/$SPACE_NAME"
+rm -rf "$TEMP_DIR"
+mkdir -p "$TEMP_DIR"
+
+# Step 1: Fetch all pages from Confluence API
+echo "Step 1: Fetching pages from Confluence..."
+echo ""
+"$SCRIPT_DIR/fetch-pages.sh" "$SPACE_NAME" "$ROOT_PAGE_ID" "$TEMP_DIR"
+
+echo ""
+echo "Step 2: Converting to Markdown..."
+echo ""
 
 # Activate Python venv
 if [ -d "$PROJECT_ROOT/.venv" ]; then
@@ -50,12 +64,14 @@ else
     exit 1
 fi
 
-# Run Python exporter
+# Step 2: Convert JSON to Markdown
 python3 "$SCRIPT_DIR/export-generic.py" \
     --space-name "$SPACE_NAME" \
     --root-page-id "$ROOT_PAGE_ID" \
     --output-dir "$OBSIDIAN_VAULT/02_Work/Projects/$SPACE_NAME"
 
 echo ""
-echo "✅ Sync completed: $SPACE_NAME"
+echo "========================================="
+echo "  ✅ Sync Completed: $SPACE_NAME"
+echo "========================================="
 echo "   Output: $OBSIDIAN_VAULT/02_Work/Projects/$SPACE_NAME"
