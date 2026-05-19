@@ -116,6 +116,8 @@ llm-knowledge-base/
 │   │   ├── fetch-pages.sh             # Confluence API caller
 │   │   ├── sync-incremental.sh        # Incremental sync
 │   │   ├── export-generic.py          # Markdown converter
+│   │   ├── upload-to-confluence.py    # Markdown → Confluence uploader
+│   │   ├── upload-to-personal.py      # Legacy personal space uploader
 │   │   ├── confluence_converter.py    # Conversion engine
 │   │   ├── attachment_downloader.py   # Image/diagram downloader
 │   │   └── load_config.py             # Config loader
@@ -139,17 +141,18 @@ llm-knowledge-base/
 
 ## 🎨 How It Works
 
-### Confluence Sync Pipeline
+### Confluence Sync Pipeline (Bi-directional)
 ```
 ┌─────────────────────────────────────┐
 │  Confluence (Your Wiki)             │
 │  Architecture, Meetings, Designs    │
 └───────────┬─────────────────────────┘
-            │ REST API
+            │ REST API (Download)
             ↓
 ┌─────────────────────────────────────┐
 │  Python Converter                   │
-│  HTML → Markdown                    │
+│  HTML → Markdown (sync)             │
+│  Markdown → HTML (upload)           │
 │  Links → [[Obsidian]]               │
 │  Images → Local files               │
 └───────────┬─────────────────────────┘
@@ -158,7 +161,11 @@ llm-knowledge-base/
 ┌─────────────────────────────────────┐
 │  Obsidian Vault                     │
 │  Local searchable knowledge base    │
-└─────────────────────────────────────┘
+│  Draft with Claude                  │
+└───────────┬─────────────────────────┘
+            │ Upload (optional)
+            ↓
+        Confluence
 ```
 
 ### Multi-Agent Collaboration
@@ -362,6 +369,30 @@ doc-help "Write technical doc"       # Claude primary
 → Claude routes to appropriate agent based on complexity
 ```
 
+### Upload Markdown to Confluence
+
+**Reverse sync: Obsidian → Confluence**
+```bash
+cd ~/path/to/llm-knowledge-base
+source .venv/bin/activate
+
+# Upload to space root (requires PERSONAL_ROOT_PAGE in config)
+python3 tools/confluence/upload-to-confluence.py ~/Docs/MyDoc.md MYSPACE
+
+# Upload under specific page
+python3 tools/confluence/upload-to-confluence.py ~/Docs/MyDoc.md MYSPACE 123456789
+```
+
+**⚠️ Bi-directional editing conflict warning:**
+
+Recommended workflow:
+1. **Draft in Obsidian**: Work locally with Claude
+2. **Upload once**: Push to Confluence when ready
+3. **Edit in Confluence**: Use Confluence web UI as single source of truth
+4. **Sync down**: Use sync scripts to pull latest (read-only)
+
+If you re-upload an existing page, you'll get a warning before overwriting.
+
 ### Verify Results
 
 **Obsidian Graph View** (Cmd/Ctrl + G):
@@ -497,7 +528,9 @@ Inspired by:
 **Maintained by**: [@ggthename](https://github.com/ggthename)
 
 **Features**:
-- ✅ Confluence Storage Format → Markdown conversion
+- ✅ **Bi-directional sync**: Confluence ↔ Obsidian
+- ✅ **Download**: Confluence Storage Format → Markdown conversion
+- ✅ **Upload**: Markdown → Confluence Storage Format (with conflict warnings)
 - ✅ Confluence links → `[[Obsidian links]]` transformation
 - ✅ Image & diagram auto-download (PNG, Draw.io, Gliffy)
 - ✅ Code blocks, lists, tables preservation
