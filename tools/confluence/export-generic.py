@@ -117,7 +117,7 @@ def main():
 
     # Initialize converters
     confluence_config = load_confluence_config()
-    converter = ConfluenceConverter(mapping)
+    converter = ConfluenceConverter(mapping)  # Pass mapping dict, not URL
     downloader = AttachmentDownloader(confluence_config['CONFLUENCE_URL'],
                                       confluence_config['CONFLUENCE_TOKEN'])
 

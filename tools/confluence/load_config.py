@@ -22,9 +22,9 @@ def load_confluence_config() -> Dict[str, str]:
             - KNOWLEDGE_ROOT
             - OBSIDIAN_VAULT
     """
-    # Find project root dynamically (2 levels up from this script)
-    script_dir = Path(__file__).parent
-    knowledge_root = script_dir.parent.parent
+    # Find project root dynamically (from tools/confluence/ to project root)
+    script_dir = Path(__file__).parent  # tools/confluence/
+    knowledge_root = script_dir.parent.parent  # project root
     config_file = knowledge_root / ".confluence-config"
 
     if not config_file.exists():
