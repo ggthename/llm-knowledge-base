@@ -174,7 +174,7 @@ def main():
 
             # Convert content
             body = page.get('body', {}).get('storage', {}).get('value', '')
-            markdown_content = converter.convert(body)
+            markdown_content = converter.convert_to_markdown(body)
 
             # Download attachments
             attachments = page.get('_expandable', {}).get('attachments', '')
