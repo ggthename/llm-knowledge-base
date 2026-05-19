@@ -219,6 +219,47 @@ PROJECT_B="$HOME/dev/data-pipeline"
 PROJECT_C="$HOME/dev/web-frontend"
 ```
 
+### Wrapper Pattern for Multiple Spaces
+
+If you sync multiple Confluence Spaces, create lightweight wrapper scripts that call `export-generic.py`:
+
+**Example: `export-engineering.py`**
+```python
+#!/usr/bin/env python3
+"""Engineering Space Exporter (Wrapper)"""
+import subprocess
+import sys
+from pathlib import Path
+from load_config import get_paths, load_confluence_config
+
+KNOWLEDGE_ROOT, OBSIDIAN_VAULT, WORK_DIR = get_paths()
+config = load_confluence_config()
+
+script_path = Path(__file__).parent / "export-generic.py"
+output_dir = WORK_DIR / "Projects" / "ENGINEERING"
+temp_dir = KNOWLEDGE_ROOT / ".temp" / "engineering-full"  # Match your sync script's naming
+
+args = [
+    "python3", str(script_path),
+    "--space-name", "ENGINEERING",
+    "--root-page-id", config.get("ENGINEERING_ROOT_PAGE", ""),
+    "--output-dir", str(output_dir),
+    "--temp-dir", str(temp_dir)  # Optional: override default .temp/{space-name}
+]
+
+if '--no-delete' in sys.argv:
+    args.append('--no-delete')
+
+result = subprocess.run(args, cwd=str(KNOWLEDGE_ROOT))
+sys.exit(result.returncode)
+```
+
+**Benefits**:
+- Single generic converter (no code duplication)
+- Space-specific configuration (each wrapper has different ROOT_PAGE, output_dir, etc.)
+- Easy to add new spaces (just copy and modify wrapper)
+- `--temp-dir` handles naming mismatches (e.g., `engineering-full` vs `ENGINEERING`)
+
 ---
 
 ## 📖 Real-World Example
@@ -334,7 +375,18 @@ complex_code:
 ./tools/confluence/sync-space.sh YOUR_SPACE YOUR_ROOT_PAGE_ID
 ```
 
-**Method 3: Automatic** (cron)
+**Method 3: Verify Sync Results**
+```bash
+./tools/confluence/sync-verify.sh
+```
+
+Checks:
+- ✅ Document count matches mapping file
+- ✅ README exists with Statistics section
+- ✅ No broken wikilinks (excludes images)
+- ✅ No orphaned mappings (deleted pages cleaned up)
+
+**Method 4: Automatic** (cron)
 ```bash
 # Setup once
 ./setup-auto-sync.sh

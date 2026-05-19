@@ -365,6 +365,7 @@ def main():
     parser.add_argument('--space-name', required=True, help='Space name (e.g., ENGINEERING, CATCH)')
     parser.add_argument('--root-page-id', required=True, help='Root page ID to skip in hierarchy')
     parser.add_argument('--output-dir', required=True, help='Output directory path')
+    parser.add_argument('--temp-dir', help='Temp directory path (default: .temp/{space-name})')
     parser.add_argument('--no-delete', action='store_true', help='Disable delete detection (for incremental sync)')
     args = parser.parse_args()
 
@@ -375,7 +376,10 @@ def main():
 
     # Setup paths
     KNOWLEDGE_ROOT, OBSIDIAN_VAULT, WORK_DIR = get_paths()
-    TEMP_DIR = KNOWLEDGE_ROOT / ".temp" / args.space_name
+    if args.temp_dir:
+        TEMP_DIR = Path(args.temp_dir)
+    else:
+        TEMP_DIR = KNOWLEDGE_ROOT / ".temp" / args.space_name
     OUTPUT_DIR = Path(args.output_dir)
     MAPPING_FILE = WORK_DIR / ".confluence-mapping.json"
 
